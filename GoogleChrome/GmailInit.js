@@ -1,7 +1,7 @@
-/* Blank Canvas Gmail Signatures [http://blankcanvas.me/gmailsignatures/]
+/* Blank Canvas Signatures for Gmail [http://blankcanvas.me/gmailsignatures/]
  * Copyright (c) 2009, 2010 Jerome Dane <http://blankcanvas.me/contact/>  
  * 
- * This file is part of the Blank Canvas Gmail Signatures. Please see /readme.md for
+ * This file is part of the Blank Canvas Signatures for Gmail. Please see /readme.md for
  * more information, credits, and author requests. 
  * 
  * BC Gmail Signatures is free software: you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* This is the bootstrap file for Google Chrome */
+
 if(!com) { var com = {} }
 if(!com.BlankCanvas) { com.BlankCanvas = {} }
 
@@ -25,7 +27,9 @@ $ = getJqueryInstance();
 
 window.addEventListener("load", function() {
 	com.BlankCanvas.GmailSignatures.init(function() { 
+		// console.log('com.BlankCanvas.GmailSignatures.init executed');
 		function gmailResult(gmailInstance) {
+			console.log('com.BlankCanvas.GmailAPI.registerGmailHandler() completed');
 			var sigInstance = new com.BlankCanvas.GmailSigInstance(gmailInstance);
 		}
 		com.BlankCanvas.GmailAPI.registerGmailHandler(gmailResult);

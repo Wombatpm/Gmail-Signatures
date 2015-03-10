@@ -1,7 +1,7 @@
-/* Blank Canvas Gmail Signatures [http://blankcanvas.me/gmailsignatures/]
+/* Blank Canvas Signatures for Gmail [http://blankcanvas.me/gmailsignatures/]
  * Copyright (c) 2009, 2010 Jerome Dane <http://blankcanvas.me/contact/>  
  * 
- * This file is part of the Blank Canvas Gmail Signatures. Please see /readme.md for
+ * This file is part of the Blank Canvas Signatures for Gmail. Please see /readme.md for
  * more information, credits, and author requests. 
  * 
  * BC Gmail Signatures is free software: you can redistribute it and/or modify
@@ -42,50 +42,64 @@ if(!com.BlankCanvas) { com.BlankCanvas = {} }
 
 com.BlankCanvas.GmailAPI = {
 	registerGmailHandler:function(callback) {
-		try {
-			function handlePageLoad(unsafeWin) {
-				try {
-					if (unsafeWin.document.location.toString().match(/mail\.google\.com/)) { // if in gmail
-						com.BlankCanvas.jQuery.init(function(jq){
-							try {
-								// check for in gmail canvas (main) frame
-								var body = unsafeWin.document.getElementsByTagName('body')[0];
-								var canvas = jq("iframe#canvas_frame", body);
-								if (canvas.size() == 1) {
-									function listenForLoadComplete(){
-										try {
-											// check for standard gmail window
-											if (canvas[0].contentDocument && jq('a[href*=/terms.html]', canvas[0].contentDocument).size() > 0) {
-												canvas = canvas[0].contentDocument;
-												var gmailInstance = new com.BlankCanvas.GmailAPI.gmailInstance(unsafeWin, jq);
-												gmailInstance.document = jq('#gbar', canvas).parent().parent().parent().parent().parent().parent()[0];
-												callback(gmailInstance);
-											} else if(canvas[0].contentDocument && jq('#gbar', canvas[0].contentDocument).size() == 0 && jq('iframe', canvas[0].contentDocument).size() == 1) {	// check for tear out
-												var gmailInstance = new com.BlankCanvas.GmailAPI.gmailInstance(unsafeWin, jq, true);
-												gmailInstance.document = canvas[0].contentDocument;
-												callback(gmailInstance);
-											}
-											else 
-												setTimeout(listenForLoadComplete, 300);
-										} catch(e) { com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad() > listenForPageComplete()'); }
-									}
-									listenForLoadComplete();
+		console.log('com.BlankCanvas.GmailAPI.registerGmailHandler called'); 
+		function handlePageLoad(unsafeWin) {
+			console.log('com.BlankCanvas.GmailAPI.registerGmailHandler in running handlePageLoad'); 
+			try {
+				if (unsafeWin.document.location.toString().match(/mail\.google\.com/)) { // if in gmail
+					com.BlankCanvas.jQuery.init(function(jq){
+						try {
+							// check for in gmail canvas (main) frame
+							var body = unsafeWin.document.getElementsByTagName('body')[0];
+							
+							// Gmail got rid of the iframe, so just use the body if no iframe is found
+							var canvas = jq("iframe#canvas_frame", body);	
+							if(canvas.size() == 0) {						
+								canvas = jq(body);
+							}
+							
+							if (canvas.size() == 1) {
+								var doc = typeof(canvas[0].contentDocument) != 'undefined' ? canvas[0].contentDocument : canvas;
+								function listenForLoadComplete(){
+									console.log('listenForLoadComplete ...');
+									try {
+										// check for standard gmail window
+										if (jq('a[href*="/terms.html"]', doc).size() > 0) {
+											//canvas = canvas[0].contentDocument;
+											
+											console.log('regular window found and loaded (terms.html link found)');
+											var gmailInstance = new com.BlankCanvas.GmailAPI.gmailInstance(unsafeWin, jq);
+											gmailInstance.document = doc;
+											callback(gmailInstance);
+										} else if(jq('iframe.editable', doc).size() == 1) {
+											// check for tear out
+											var gmailInstance = new com.BlankCanvas.GmailAPI.gmailInstance(unsafeWin, jq, true);
+											gmailInstance.document = doc;
+											console.log()
+											console.log('loaded popup window');
+											callback(gmailInstance);
+										}
+										else 
+											setTimeout(listenForLoadComplete, 300);
+									} catch(e) { console.log(e); com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad() > listenForPageComplete()'); }
 								}
-							} catch(e) { com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad() > com.BlankCanvas.jQuery.init(function() { ... }'); }
-						});
-					}
-				} catch(e) { com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad()'); }
-			}
-			switch (com.BlankCanvas.BrowserDetect.browser) {
-				case 'Firefox':
-					com.BlankCanvas.FirefoxUnsafeWindow.registerPageLoadListener(handlePageLoad);
-					break;
-				default:
-					handlePageLoad(window);
-			}
-		} catch(e) { com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler()'); }
+								listenForLoadComplete();
+							}
+						} catch(e) {  console.log(e); com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad() > com.BlankCanvas.jQuery.init(function() { ... }'); }
+					});
+				}
+			} catch(e) { console.log(e); com.BlankCanvas.GmailSignatures.debug(e, 'com.BlankCanvas.GmailAPI.registerGmailHandler() > handlePageLoad()'); }
+		}
+		switch (com.BlankCanvas.BrowserDetect.browser) {
+			case 'Firefox':
+				com.BlankCanvas.FirefoxUnsafeWindow.registerPageLoadListener(handlePageLoad);
+				break;
+			default:
+				handlePageLoad(window);
+		}
 	},
 	gmailInstance:function(unsafeWin, jq, isTearOut) {
+		//alert('creating gmail inst');
 		isTearOut = typeof(isTearOut) == 'undefined' ? false : isTearOut;
 		this.isTearOut = isTearOut;
 		this.unsafeWin = unsafeWin;
@@ -103,7 +117,7 @@ com.BlankCanvas.GmailAPI = {
 		//-------------------------- create element ------------------------------
 		this.createElement = function(type) {
 			return this.unsafeWin.document.createElement(type);
-		} 
+		};
 		//-------------------------- debug output -------------------------------
 		this.debug = function(str) {
 			function getFunctionName(fnct) {
@@ -116,6 +130,14 @@ com.BlankCanvas.GmailAPI = {
 			}
 			var message = str + "\n\n" + getFunctionName(arguments.callee.caller);
 			com.BlankCanvas.GmailSignatures.debug(message, 'com.BlankCanvas.GmailAPI');
+		}
+		//-------------------------- getToField ------------------------------
+		this.getToField = function() {
+			return this.$('textarea[name="to"]');
+		}
+		//-------------------------- getSubjectField ------------------------------
+		this.getSubjectField = function() {
+			return this.$('input[name="subject"]');
 		}
 		//-------------------------- getSendButton ------------------------------
 		this.getDiscardButton = function() {
@@ -183,7 +205,7 @@ com.BlankCanvas.GmailAPI = {
 						else
 							return 'unknown';
 				}
-			} catch(e) { this.debug("getMainElement()\n\n" + e); }
+			} catch(e) { this.debug("getActiveViewType()\n\n" + e); }
 		}
 		//-------------------------- getFromAddress ---------------------------
 		this.getFromAddress = function() {
@@ -210,38 +232,46 @@ com.BlankCanvas.GmailAPI = {
 			if(typeof(gmailInstance.numErrors) == 'undefined')
 				gmailInstance.numErrors = 0;
 			try {		
-				if(gmailInstance.numErrors < 10 && (typeof(gmailInstance.mainElementWrapper) == 'undefined' || gmailInstance.mainElementWrapper.size() == 0)) {
-					/*
-					// The following is used during development to mark divs for easy debugging
-					// it helps find an instance of a relatively uncommon class name to use
-					// as a starting point for identifying the main element wrapper
-					gmailInstance.$('div.diLZtc').each(function(i) {
-						this.id = 'bcGmailWrapperParentTest' + i;
-					});
-					*/
-					var subSelectStr =  ' div:first div:first + div div:first';
-					gmailInstance.mainElementWrapper = gmailInstance.$('div.diLZtc:eq(8)' + subSelectStr);
-					// check for sigs on right lab feature enabled
+				if(gmailInstance.numErrors < 4 && (typeof(gmailInstance.mainElementWrapper) == 'undefined' || gmailInstance.mainElementWrapper.size() == 0)) {
+					
+					// NOTE ===========================
+					//
+					// This is the part Google always screws up by changging the dom. Try to find div[role="main"] and point at its parent
+					//
+					// ====================================
+					
+					gmailInstance.mainElementWrapper = gmailInstance.$('.oy8Mbf:eq(5) + div div:eq(3) + div div:eq(2)');
+					
+									
+					// check for older versions of Gmail (depreciated)
 					if (gmailInstance.mainElementWrapper.size() == 0)
-						gmailInstance.mainElementWrapper = gmailInstance.$('div.diLZtc:eq(6)' + subSelectStr);
-					// check for older versions of Gmail 
+						gmailInstance.mainElementWrapper = gmailInstance.$('div.oLaOvc:eq(0) > div:first > div.nH:first');
+					// check for older versions of Gmail (depreciated)
+					if (gmailInstance.mainElementWrapper.size() == 0) {
+						var subSelectStr =  ' div:first div:first + div.nH div:first';
+						gmailInstance.mainElementWrapper = gmailInstance.$('div.q0CeU div.diLZtc:eq(' + index + ')' + subSelectStr);
+					}
+					// check for older versions of Gmail (depreciated)
 					if (gmailInstance.mainElementWrapper.size() == 0)
 						gmailInstance.mainElementWrapper = gmailInstance.$('div:first div:first + div div:first div:first + div div:eq(2) + div div:first div:eq(3) + div div:first');
-					// check for chat on right labs feature
+					// check for chat on right labs feature (depreciated)
 					if (gmailInstance.mainElementWrapper.size() == 0)
 						gmailInstance.mainElementWrapper = gmailInstance.$('div:first div:first + table td:eq(0) + td div:first + div div:eq(2) + div div:first div:eq(3) + div div:first');
-					// try for older Gmail versions
+					// try for even older Gmail versions (depreciated)
 					if (gmailInstance.mainElementWrapper.size() == 0)
 						gmailInstance.mainElementWrapper = gmailInstance.$('div:first div:first + div div:first div:first + div + div div:eq(3) + div div:first div:eq(3) + div div:first');
-					// check for chat on right labs feature in older Gmail version
+					// check for chat on right labs feature in even older Gmail version (depreciated)
 					if (gmailInstance.mainElementWrapper.size() == 0)
 						gmailInstance.mainElementWrapper = gmailInstance.$('div:first div:first + table td:eq(0) + td + td div:first + div div:eq(3) + div div:first div:eq(3) + div div:first');
+
 					gmailInstance.mainElementWrapper[0].id = 'bcGmailMainElementWrapper';
 				}
 				return gmailInstance.mainElementWrapper[0];				
 			} catch(e) {
 				gmailInstance.numErrors++;
-				gmailInstance.debug("getMainElement()\n\n" + e);
+				console.log(gmailInstance.numErrors + ' errors');
+				console.log(e.getMessage());
+			//	console.log("getMainElement()\n\n" + e);
 			}
 		}
 		//----------------------- getMessageBoxText -----------------
@@ -269,8 +299,18 @@ com.BlankCanvas.GmailAPI = {
 			try {
 				if(isTearOut) {
 					return unsafeWin.document.title.toString().match(/([^\s]+)\s*$/)[1];
-				} else
-					return this.$('b', this.$('#guser')).eq(0).text();
+				}
+				// try clean style from december 2011
+				if(this.$('#gbvg .gbps2').size() > 0) {
+					return this.$('#gbvg .gbps2').text();
+				}
+				// try older style 
+				if(this.$('#gbmpdv .gbps2').size() > 0) {
+					return this.$('#gbmpdv .gbps2').text();
+				}
+				
+				// try getting old style
+				return this.$('b', this.$('#guser')).eq(0).text();
 			} catch(e) { this.debug("getPrimaryEmailAddress\n\n" + e); }
 		}
 		//-------------------------- getSendButton ------------------------------
@@ -297,31 +337,29 @@ com.BlankCanvas.GmailAPI = {
 							else
 								gmailInstance.unsafeWin.setTimeout(checkForFromSelect, 500);
 						}
-					} catch(e) { gmailInstance.debug("registerFromSelectHandler()\n\n" + e); }
+					} catch(e) { console.log("registerFromSelectHandler()\n\n" + e); }
 				}
 				checkForFromSelect();	
-			} catch(e) { gmailInstance.debug("registerFromSelectHandler()\n\n" + e); }		
+			} catch(e) { console.log("registerFromSelectHandler()\n\n" + e); }		
 		}
 		//-------------------------- registerMessageBoxHandler ------------------
 		this.registerMessageBoxHandler = function(callback) {
-			try {
-				var gmailInstance = this;
-				this.listeningForMessageBox = true;
-				this.unsafeWin.addEventListener('unload', function() {	// listen for page unload and stop listening 
-					gmailInstance.listeningForMessageBox = false;
-				}, true);
-				function checkForMessageBox() {
-					try {
-						if(gmailInstance.listeningForMessageBox) {
-							if(gmailInstance.getMessageBox())
-								callback();
-							else
-								gmailInstance.unsafeWin.setTimeout(checkForMessageBox, 500);
-						}
-					} catch(e) { gmailInstance.debug("registerMessageBoxHandler()\n\n" + e); }
+		
+			var gmailInstance = this;
+			this.listeningForMessageBox = true;
+			this.unsafeWin.addEventListener('unload', function() {	// listen for page unload and stop listening 
+				gmailInstance.listeningForMessageBox = false;
+			}, true);
+			function checkForMessageBox() {
+				if(gmailInstance.listeningForMessageBox) {
+					if(gmailInstance.getMessageBox())
+						callback();
+					else
+						gmailInstance.unsafeWin.setTimeout(checkForMessageBox, 500);
 				}
-				checkForMessageBox();
-			} catch(e) { gmailInstance.debug("registerMessageBoxHandler()\n\n" + e); }			
+			}
+			checkForMessageBox();
+					
 		}
 		//-------------------------- registerMessageBoxGoneHandler ------------------
 		this.registerMessageBoxGoneHandler = function(callback) {
@@ -338,35 +376,32 @@ com.BlankCanvas.GmailAPI = {
 						else
 							gmailInstance.unsafeWin.setTimeout(checkForMessageBoxGone, 500);
 					}
-				} catch(e) { gmailInstance.debug("registerMessageBoxGoneHandler()\n\n" + e); }
+				} catch(e) { console.log("registerMessageBoxGoneHandler()\n\n" + e); }
 			}
 			checkForMessageBoxGone();			
 		}
 		//-------------------------- registerViewChangeCallback -----------------
 		this.registerViewChangeCallback = function(callback) {
-			try {
-				var gmailInstance = this;
-				var oldActiveElement = null;
-				this.listeningForViewChange = true;
-				this.unsafeWin.addEventListener('unload', function() {	// listen for page unload and stop listening 
-					gmailInstance.listeningForViewChange = false;
-					gmailInstance.stopListeningForElements();
-				}, true);				
-				this.unsafeWin.setInterval(function() {
-					try {
-						if(gmailInstance.listeningForViewChange) {
-							var newActiveElement = gmailInstance.getActiveElement();
-							if (newActiveElement != oldActiveElement) {
-								oldActiveElement = newActiveElement;
-								gmailInstance.stopListeningForElements();
-								callback();
-							}
+			
+			var gmailInstance = this;
+			var oldActiveElement = null;
+			this.listeningForViewChange = true;
+			this.unsafeWin.addEventListener('unload', function() {	// listen for page unload and stop listening 
+				gmailInstance.listeningForViewChange = false;
+				gmailInstance.stopListeningForElements();
+			}, true);				
+			this.unsafeWin.setInterval(function() {
+				try {
+					if(gmailInstance.listeningForViewChange) {
+						var newActiveElement = gmailInstance.getActiveElement();
+						if (newActiveElement != oldActiveElement) {
+							oldActiveElement = newActiveElement;
+							gmailInstance.stopListeningForElements();
+							callback();
 						}
-					} catch(e) { gmailInstance.debug("registerViewChangeCallback()\n\n" + e); }
-				}, 500);
-			} catch(e) {
-				this.debug("registerViewChangeCallback()\n\n" + e);
-			}
+					}
+				} catch(e) { console.log("registerViewChangeCallback()\n\n" + e); }
+			}, 500);
 		}
 		//-------------------------- setMessageBoxText -----------------
 		this.setMessageText = function(str) {
@@ -377,7 +412,7 @@ com.BlankCanvas.GmailAPI = {
 			} catch(e) {
 				this.debug("setMessageText()\n\n" + e);
 			}	
-		}
+		};
 		//-------------------------- stopListeningForElements -----------------
 		this.stopListeningForElements = function() {
 			this.listeningForFromSelect = false;
@@ -385,4 +420,4 @@ com.BlankCanvas.GmailAPI = {
 			this.listeningForMessageBoxGone = false;
 		}
 	}
-}
+};
